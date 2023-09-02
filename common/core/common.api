@@ -1,0 +1,53 @@
+syntax = "v1"
+
+info(
+	title: "common.api"
+	desc: "type desc here"
+	author: "wang xuebing"
+	email: "lynntobing@hotmail.com"
+	date: "2023/5/7"
+	version: "v1.0"
+)
+
+type (
+	ComIdPathReq {
+		ID string `path:"id"` //Path ID
+	}
+	ComIdFormReq {
+		ID *string `form:"id,optional"` //Form ID
+	}
+
+	ComCodePathReq {
+		Code string `path:"code"` //Path编码
+	}
+
+	ComFilterPathReq {
+		Filter string `path:"filter"` //Path过滤条件
+	}
+
+	ComFilterFormReq {
+		Filter *string `form:"filter,optional"` //Form过滤条件
+	}
+
+	ComPageReq {
+		Page     int     `form:"page"`            //页码
+		PageSize int     `form:"pageSize"`        //每页数量
+		Filter   *string `form:"filter,optional"` //过滤条件
+	}
+
+	ComKvResp {
+		Key   string `json:"key"`   //键
+		Value string `json:"value"` //值
+	}
+	ComKvListResp {
+		Items []*ComKvResp `json:"items"` //键值列表
+	}
+
+	ComFileResp {
+		FileName string `json:"fileName"` //文件名
+		FileUrl  string `json:"fileUrl"`  //文件路径
+		FileSize int64  `json:"fileSize"` //文件大小
+		FileMd5  string `json:"fileMd5"`  //文件MD5
+		FileType string `json:"fileType"` //文件类型
+	}
+)

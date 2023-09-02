@@ -1,0 +1,126 @@
+package model
+
+import(
+    "context"
+    "gorm.io/gorm"
+    "{{.ProjectName}}/common/core"
+)
+
+type (
+    {{.Table}}Model interface {
+        WithTrans(ctx context.Context) {{.Table}}Model
+        Insert(ctx context.Context, args *{{.Table}}) error
+        BatchInsert(ctx context.Context, args []*{{.Table}}) error
+        Delete(ctx context.Context, id string) error
+        Update(ctx context.Context, id string, v map[string]interface{}) error
+        FindOne(ctx context.Context, id string) (*{{.Table}}, error)
+        FindAll(ctx context.Context, page,pageSize int,filter *string) (int64,[]*{{.Table}},error)
+        Enable(ctx context.Context, id string) error
+        IsExist(ctx context.Context, id *string, code string) (bool, error)
+    }
+
+    {{.Table}} struct {
+         ID          string         `json:"id" gorm:"type:varchar(32);primaryKey"`  //ID
+         IsEnable    bool           `json:"is_enable" gorm:"not null"`         //是否启用
+         CreatedAt   int64          `json:"created_at" gorm:"autoCreateTime:milli"` //创建时间
+         UpdatedAt   int64          `json:"updated_at" gorm:"autoUpdateTime:milli"` //更新时间
+         DeletedAt   gorm.DeletedAt `json:"deleted_at"`                             //删除时间
+    }
+
+    default{{.Table}}Model struct {
+        db *gorm.DB
+    }
+)
+
+func New{{.Table}}Model(isMigration bool, db *gorm.DB) {{.Table}}Model {
+    if isMigration{
+        err := db.AutoMigrate(&{{.Table}}{})
+        if err != nil {
+            panic(err)
+        }
+    }
+    return &default{{.Table}}Model{db: db}
+}
+
+func (m *default{{.Table}}Model) WithTrans(ctx context.Context) {{.Table}}Model {
+    return &default{{.Table}}Model{db: core.GetDB(ctx,m.db)}
+}
+
+func (m *default{{.Table}}Model) Insert(ctx context.Context, args *{{.Table}}) error {
+    return m.db.Create(&args).Error
+}
+
+func (m *default{{.Table}}Model) BatchInsert(ctx context.Context, args []*{{.Table}}) error{
+    return m.db.CreateInBatches(&args,100).Error
+}
+
+func (m *default{{.Table}}Model) Delete(ctx context.Context, id string) error {
+    return m.db.Delete(&{{.Table}}{},id).Error
+}
+
+func (m *default{{.Table}}Model) Update(ctx context.Context, id string, v map[string]interface{}) error {
+    return m.db.Model(&{{.Table}}{}).Where("id = ?",id).Updates(v).Error
+}
+
+func (m *default{{.Table}}Model) FindOne(ctx context.Context, id string) (*{{.Table}}, error) {
+    var result *{{.Table}}
+    
+    err := m.db.Where("id = ?", id).First(&result).Error
+
+    return result, err
+}
+
+func (m *default{{.Table}}Model) FindAll(ctx context.Context, page,pageSize int,filter *string) (int64,[]*{{.Table}},error){
+    var(
+        total int64
+        list []*{{.Table}}
+        err error
+    )
+
+    p := core.PageHandle(page, pageSize, filter)
+    query := m.db.Model(&{{.Table}}{})
+    if filter != nil{
+        //todo......
+    }
+    err = query.Count(&total).Error
+    if err != nil {
+    		return 0, nil, err
+    }
+
+    err = query.Offset(p.Page).Limit(p.PageSize).Order("created_at desc").Find(&list).Error
+
+    return total, list, err
+}
+
+func (m *default{{.Table}}Model) Enable(ctx context.Context, id string) error{
+    var (
+		result *{{.Table}}
+		isEnable bool
+		err      error
+	)
+
+	result, err = m.FindOne(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if !result.IsEnable {
+		isEnable = true
+	}
+
+	err = m.Update(ctx, id, map[string]interface{}{"is_enable": isEnable})
+
+	return err
+}
+
+func (m *default{{.Table}}Model) IsExist(ctx context.Context, id *string, code string) (bool, error){
+    var count int64
+
+	query := m.db.Model(&{{.Table}}{})
+	if id != nil {
+		query = query.Where("id != ?", id)
+	}
+	err := query.Where("code = ?", code).Count(&count).Error
+
+	return count > 0, err
+}
