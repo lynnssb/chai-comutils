@@ -26,11 +26,6 @@ type CodeErr struct {
 	Msg  string `json:"msg"`
 }
 
-type CodeErrResp struct {
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
-}
-
 func NewCodeError(code int, msg string) error {
 	return &CodeErr{
 		Code: code,
@@ -57,8 +52,12 @@ func (e *CodeErr) Error() string {
 	return e.Msg
 }
 
-func (e *CodeErr) Data() *CodeErrResp {
-	return &CodeErrResp{
+func (e *CodeErr) GetErrCode() int {
+	return e.Code
+}
+
+func (e *CodeErr) Data() *CodeErr {
+	return &CodeErr{
 		Code: e.Code,
 		Msg:  e.Msg,
 	}

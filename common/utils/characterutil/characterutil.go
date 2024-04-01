@@ -8,6 +8,7 @@
 package characterutil
 
 import (
+	"encoding/json"
 	"strings"
 )
 
@@ -89,6 +90,11 @@ func StringDifference(arr1, arr2 []string) []string {
 			result = append(result, v)
 		}
 	}
-
 	return result
+}
+
+// IsJSON 判断data是否是json字符串
+func IsJSON(data []byte) bool {
+	var js json.RawMessage
+	return json.Unmarshal(data, &js) == nil
 }

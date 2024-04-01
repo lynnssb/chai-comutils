@@ -9,22 +9,22 @@ import(
 type (
     {{.Table}}Model interface {
         WithTrans(ctx context.Context) {{.Table}}Model
-        Insert(ctx context.Context, args *{{.Table}}) error
+        Insert(ctx context.Context, arg *{{.Table}}) error
         BatchInsert(ctx context.Context, args []*{{.Table}}) error
         Delete(ctx context.Context, id string) error
         Update(ctx context.Context, id string, v map[string]interface{}) error
         FindOne(ctx context.Context, id string) (*{{.Table}}, error)
-        FindAll(ctx context.Context, page,pageSize int,filter *string) (int64,[]*{{.Table}},error)
+        FindPage(ctx context.Context, page,pageSize int,filter *string) (int64,[]*{{.Table}},error)
         Enable(ctx context.Context, id string) error
         IsExist(ctx context.Context, id *string, code string) (bool, error)
     }
 
     {{.Table}} struct {
-         ID          string         `json:"id" gorm:"type:varchar(32);primaryKey"`  //ID
-         IsEnable    bool           `json:"is_enable" gorm:"not null"`         //是否启用
-         CreatedAt   int64          `json:"created_at" gorm:"autoCreateTime:milli"` //创建时间
-         UpdatedAt   int64          `json:"updated_at" gorm:"autoUpdateTime:milli"` //更新时间
-         DeletedAt   gorm.DeletedAt `json:"deleted_at"`                             //删除时间
+         ID          string         `json:"id" gorm:"column:id;type:varchar(32);primaryKey"`  //ID
+         IsEnable    bool           `json:"is_enable" gorm:"column:is_enable;not null"`       //是否启用
+         CreatedAt   int64          `json:"created_at" gorm:"column:created_at,autoCreateTime:milli"`           //创建时间
+         UpdatedAt   int64          `json:"updated_at" gorm:"column:updated_at,autoUpdateTime:milli"`           //更新时间
+         DeletedAt   gorm.DeletedAt `json:"deleted_at" gorm:"column:deleted_at"`                                //删除时间
     }
 
     default{{.Table}}Model struct {
@@ -46,8 +46,8 @@ func (m *default{{.Table}}Model) WithTrans(ctx context.Context) {{.Table}}Model 
     return &default{{.Table}}Model{db: core.GetDB(ctx,m.db)}
 }
 
-func (m *default{{.Table}}Model) Insert(ctx context.Context, args *{{.Table}}) error {
-    return m.db.Create(&args).Error
+func (m *default{{.Table}}Model) Insert(ctx context.Context, arg *{{.Table}}) error {
+    return m.db.Create(&arg).Error
 }
 
 func (m *default{{.Table}}Model) BatchInsert(ctx context.Context, args []*{{.Table}}) error{
@@ -70,7 +70,7 @@ func (m *default{{.Table}}Model) FindOne(ctx context.Context, id string) (*{{.Ta
     return result, err
 }
 
-func (m *default{{.Table}}Model) FindAll(ctx context.Context, page,pageSize int,filter *string) (int64,[]*{{.Table}},error){
+func (m *default{{.Table}}Model) FindPage(ctx context.Context, page,pageSize int,filter *string) (int64,[]*{{.Table}},error){
     var(
         total int64
         list []*{{.Table}}
@@ -95,7 +95,6 @@ func (m *default{{.Table}}Model) FindAll(ctx context.Context, page,pageSize int,
 func (m *default{{.Table}}Model) Enable(ctx context.Context, id string) error{
     var (
 		result *{{.Table}}
-		isEnable bool
 		err      error
 	)
 
@@ -103,14 +102,7 @@ func (m *default{{.Table}}Model) Enable(ctx context.Context, id string) error{
 	if err != nil {
 		return err
 	}
-
-	if !result.IsEnable {
-		isEnable = true
-	}
-
-	err = m.Update(ctx, id, map[string]interface{}{"is_enable": isEnable})
-
-	return err
+	return m.db.Model(&{{.Table}}{}).Where("id = ?",id).Updates(map[string]interface{}{"is_enable": !result.IsEnable}).Error
 }
 
 func (m *default{{.Table}}Model) IsExist(ctx context.Context, id *string, code string) (bool, error){

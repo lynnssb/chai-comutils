@@ -13,6 +13,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.53
 	github.com/mojocn/base64Captcha v1.3.5
 	github.com/qiniu/go-sdk/v7 v7.15.0
+	github.com/shopspring/decimal v1.3.1
 	github.com/valyala/fasthttp v1.47.0
 	github.com/xuri/excelize/v2 v2.7.1
 	github.com/zeromicro/go-zero v1.5.2
